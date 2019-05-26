@@ -103,7 +103,7 @@ WALEConfig = namedtuple(
 
 class WALERestore(object):
     def __init__(self, scope, datadir, connstring, env_dir, threshold_mb,
-                 threshold_pct, use_iam, no_master, retries):
+                 threshold_pct, use_iam, no_master, retries, use_walg):
         self.scope = scope
         self.master_connection = connstring
         self.data_dir = datadir
@@ -112,7 +112,7 @@ class WALERestore(object):
         wale_cmd = [
             'envdir',
             env_dir,
-            'wal-e',
+            'wal-g' if use_walg else 'wal-e',
         ]
 
         if use_iam == 1:
@@ -343,6 +343,7 @@ def main():
     parser.add_argument('--threshold_backup_size_percentage', type=int, default=30)
     parser.add_argument('--use_iam', type=int, default=0)
     parser.add_argument('--no_master', type=int, default=0)
+    parser.add_argument('--use_walg', type=int, default=0)
     args = parser.parse_args()
 
     exit_code = None
@@ -357,7 +358,7 @@ def main():
         restore = WALERestore(scope=args.scope, datadir=args.datadir, connstring=args.connstring,
                               env_dir=args.envdir, threshold_mb=args.threshold_megabytes,
                               threshold_pct=args.threshold_backup_size_percentage, use_iam=args.use_iam,
-                              no_master=args.no_master, retries=args.retries)
+                              no_master=args.no_master, retries=args.retries, use_walg=args.use_walg)
         exit_code = restore.run()
         if not exit_code == ExitCode.RETRY_LATER:  # only WAL-E failures lead to the retry
             logger.debug('exit_code is %r, not retrying', exit_code)
